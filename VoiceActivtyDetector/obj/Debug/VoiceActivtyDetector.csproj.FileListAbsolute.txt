@@ -1,0 +1,10 @@
+C:\Users\Ed\Source\Repos\VoiceActivtyDetector\VoiceActivtyDetector\obj\Debug\VoiceActivtyDetector.csprojAssemblyReference.cache
+C:\Users\Ed\Source\Repos\VoiceActivtyDetector\VoiceActivtyDetector\obj\Debug\VoiceActivtyDetector.Form1.resources
+C:\Users\Ed\Source\Repos\VoiceActivtyDetector\VoiceActivtyDetector\obj\Debug\VoiceActivtyDetector.Properties.Resources.resources
+C:\Users\Ed\Source\Repos\VoiceActivtyDetector\VoiceActivtyDetector\obj\Debug\VoiceActivtyDetector.csproj.GenerateResource.cache
+C:\Users\Ed\Source\Repos\VoiceActivtyDetector\VoiceActivtyDetector\obj\Debug\VoiceActivtyDetector.csproj.CoreCompileInputs.cache
+C:\Users\Ed\Source\Repos\VoiceActivtyDetector\VoiceActivtyDetector\bin\Debug\VoiceActivtyDetector.exe.config
+C:\Users\Ed\Source\Repos\VoiceActivtyDetector\VoiceActivtyDetector\bin\Debug\VoiceActivtyDetector.exe
+C:\Users\Ed\Source\Repos\VoiceActivtyDetector\VoiceActivtyDetector\bin\Debug\VoiceActivtyDetector.pdb
+C:\Users\Ed\Source\Repos\VoiceActivtyDetector\VoiceActivtyDetector\obj\Debug\VoiceActivtyDetector.exe
+C:\Users\Ed\Source\Repos\VoiceActivtyDetector\VoiceActivtyDetector\obj\Debug\VoiceActivtyDetector.pdb
