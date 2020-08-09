@@ -23,9 +23,14 @@ namespace VoiceActivtyDetector
         int sampleRate;
         int bitsPerSample;
         int dataLength;
+        int winLength;
+        double lambda;
+        double windowms;
+        int windowsCount;
         int sampleCount;
         int[] audioData;
         double [] loPassAudio;
+        double[] zcDistribution;
         List<int> zeros = new List<int>();
         bool is16bit;
 
@@ -48,7 +53,7 @@ namespace VoiceActivtyDetector
 
             // Set palette.
             chart1.Palette = ChartColorPalette.SeaGreen;
-            
+            chart2.Palette = ChartColorPalette.Bright;           
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -107,6 +112,37 @@ namespace VoiceActivtyDetector
             }
         }
 
+        private void button4_Click(object sender, EventArgs e)
+        {
+            // Calculate lambda and poisson distribution from window input
+            if (!Int32.TryParse(textBox3.Text, out winLength))
+            {
+                MessageBox.Show("Window length is not a valid integer. Please re-enter.", "Confirm", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+                textBox3.Text = "";
+                return;
+            }
+            else if (winLength <= 2 || winLength > sampleCount)
+            {
+                MessageBox.Show("Window length must be between 2 and " + sampleCount + ". Please re-enter.", "Confirm", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                textBox3.Text = "";
+                return;
+            }
+            else if (audioData == null)
+            {
+                MessageBox.Show("Error: Must load audio data first to calculate lambda and poissson values.");
+                textBox3.Text = "";
+                return;
+            }
+            //Calculate window size in ms
+            windowms = (double)winLength * 1000 / sampleRate;
+            textBox4.Text = String.Format(windowms.ToString() + " ms");
+            //Calculate lambda
+            FindZCDist();
+            //Plot histogram
+            PlotZCDist();
+            //calculate poisson
+        }
 
         private void WaveReader(string spath)
         {
@@ -216,8 +252,72 @@ namespace VoiceActivtyDetector
                 }
                 sr.Close();
             }
-
         }
+        
+        private void FindZCDist()
+        {
+            //Calculate Lambda for window size
+            
+            zcDistribution = new double[winLength+1];
+            windowsCount = sampleCount / winLength;
+            lambda = zeros.Count / windowsCount;
+            int windowSum;
+            int zeroIndex = 0;
+            for (int i = winLength-1; i< sampleCount; i+= winLength)
+            {
+                windowSum = 0;
+                while(zeros[zeroIndex] <= i)
+                {
+                    windowSum++;
+                    if (zeroIndex < zeros.Count - 1)
+                        zeroIndex++;
+                    else break;
+                }
+                //Console.WriteLine(String.Format("Window Sample Limit {0}, windowSum {1}, Zero index: {2}", i, windowSum,zeroIndex));
+                zcDistribution[windowSum]++;
+                    
+            }
+        }
+
+        private void PlotZCDist()
+        {
+            int[] xValues = new int[winLength + 1];
+            double[] pValues = new double[winLength + 1];   //Poisson values
+            Console.WriteLine("Beginning ZeroCount Calculation");
+            for ( int i = 0; i<= winLength; i++)
+            {
+                xValues[i] = i;
+                pValues[i] = FindPoisson(lambda, i)*windowsCount;
+                Console.WriteLine(String.Format("{0}: pValues: {1}", i, pValues[i]));
+            }
+            chart2.Series.Clear();
+            chart2.Series.Add("Zero Crossings");
+            chart2.Series["Zero Crossings"].Points.DataBindXY(xValues,zcDistribution);
+            chart2.Titles.Clear();
+            chart2.Titles.Add(String.Format("Total samples : {0}, total zeros {1}\nWindow length : {2}, \u03BB : {3}", sampleCount, zeros.Count,winLength, lambda));
+            chart2.Series.Add("Poisson");
+            chart2.Series["Poisson"].Points.DataBindXY(xValues, pValues);
+        }
+
+        private double FindPoisson(double l,int k)
+        {
+            //Return the value of Poisson with X=k and lambda = l
+            int factorial;
+            if (k > 1)
+            {
+                factorial = k;
+                for (int i = k - 1; i > 1; i--)
+                {
+                    factorial *= i;
+                }
+            }
+            else
+            {
+                factorial = 1;
+            }
+
+            return Math.Pow(l, k) * Math.Exp(-l) / factorial;
+        } 
     }      
 }
 
