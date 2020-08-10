@@ -25,6 +25,7 @@ namespace VoiceActivtyDetector
         int dataLength;
         int winLength;
         double lambda;
+        double stdDev;
         double windowms;
         int windowsCount;
         int sampleCount;
@@ -73,6 +74,7 @@ namespace VoiceActivtyDetector
                         chart1.Series.Clear();
                         chart1.ChartAreas[0].AxisY.Minimum = -10000;
                         chart1.ChartAreas[0].AxisY.Maximum = 10000;
+                        zeros.Clear();
                         PlotRawWAV();
                         Console.WriteLine(String.Format(" Channels: {0}, SR : {1}, BPS {2}, samples : {3}", channels, sampleRate, bitsPerSample, sampleCount));
                     }
@@ -261,6 +263,7 @@ namespace VoiceActivtyDetector
             zcDistribution = new double[winLength+1];
             windowsCount = sampleCount / winLength;
             lambda = zeros.Count / windowsCount;
+            double sumSquares = 0;
             int windowSum;
             int zeroIndex = 0;
             for (int i = winLength-1; i< sampleCount; i+= winLength)
@@ -274,9 +277,10 @@ namespace VoiceActivtyDetector
                     else break;
                 }
                 //Console.WriteLine(String.Format("Window Sample Limit {0}, windowSum {1}, Zero index: {2}", i, windowSum,zeroIndex));
-                zcDistribution[windowSum]++;
-                    
+                sumSquares += Math.Pow(windowSum - lambda, 2);
+                zcDistribution[windowSum]++;                 
             }
+            stdDev = Math.Sqrt(sumSquares / windowsCount);
         }
 
         private void PlotZCDist()
@@ -294,7 +298,7 @@ namespace VoiceActivtyDetector
             chart2.Series.Add("Zero Crossings");
             chart2.Series["Zero Crossings"].Points.DataBindXY(xValues,zcDistribution);
             chart2.Titles.Clear();
-            chart2.Titles.Add(String.Format("Total samples : {0}, total zeros {1}\nWindow length : {2}, \u03BB : {3}", sampleCount, zeros.Count,winLength, lambda));
+            chart2.Titles.Add(String.Format("Total samples : {0}, total zeros {1}\nWindow length : {2}, \u03BB : {3}, \u03C3 : {4}", sampleCount, zeros.Count,winLength, lambda, stdDev));
             chart2.Series.Add("Poisson");
             chart2.Series["Poisson"].Points.DataBindXY(xValues, pValues);
         }
@@ -317,7 +321,18 @@ namespace VoiceActivtyDetector
             }
 
             return Math.Pow(l, k) * Math.Exp(-l) / factorial;
-        } 
+        }
+
+        private double FindStdDev(double [] values, double m)
+        {
+            //Find standard deviation of an array of values with mean, m.
+            double sumSquares =0;
+            int N = values.Length;
+            foreach (double value in values){
+                sumSquares += Math.Pow(value - m, 2);
+            }
+            return Math.Sqrt(sumSquares / N);
+        }
     }      
 }
 
