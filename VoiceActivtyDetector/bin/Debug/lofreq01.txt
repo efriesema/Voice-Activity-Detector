@@ -1,0 +1,12 @@
+16000
+3883
+4000
+0.97075
+1.31089443749998
+1925
+884
+714
+337
+140
+Noise and Speech Distribution for 4 sample(0.25ms) window
+Speech Mean=1.1045, Var=1.44658,  Noise Mean=0.97075, Var=1.31089
