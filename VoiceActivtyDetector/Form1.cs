@@ -34,6 +34,7 @@ namespace VoiceActivtyDetector
         int[] audioData;
         double [] hiPassAudio;
         double[] zcDistribution;
+        bool isFiltered = false;
         List<int> zeros = new List<int>();
         List<int> speechSamples = new List<int>();
         List<int> noiseSamples = new List<int>();
@@ -72,6 +73,11 @@ namespace VoiceActivtyDetector
             numericUpDown1.Value = 100;
             numericUpDown2.Value = 4;
 
+            //textBox 7 - filter coefficient
+            textBox7.Text = "0.95";
+
+            //checkBox 1 - set show zero crossings to true
+            checkBox1.Checked = true;
             
         }
 
@@ -121,6 +127,7 @@ namespace VoiceActivtyDetector
             //Load new audio data
             speechSamples.Clear();
             noiseSamples.Clear();
+            isFiltered = false;
             openFileDialog1 = new OpenFileDialog();
 
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
@@ -136,7 +143,6 @@ namespace VoiceActivtyDetector
                         chart1.Series.Clear();
                         chart1.ChartAreas[0].AxisY.Minimum = -8000;
                         chart1.ChartAreas[0].AxisY.Maximum = 8000;
-                        zeros.Clear();
                         PlotRawWAV();
                         Console.WriteLine(String.Format(" Channels: {0}, SR : {1}, BPS {2}, samples : {3}", channels, sampleRate, bitsPerSample, sampleCount));
                     }
@@ -307,13 +313,32 @@ namespace VoiceActivtyDetector
 
         private void PlotFilteredWAV()
         {
+            double a1 = 0;          //Filter first-order coefficient
             
-            hiPassAudio = new double[sampleCount];
-            hiPassAudio[0] = 0;
+            if (!Double.TryParse(textBox7.Text, out a1))
+            {
+                MessageBox.Show("Error: need to enter a valid floating point value");
+                textBox7.Text = "";
+                return;
+            }
+            if(a1 <=0 || a1 >= 1.0)
+            {
+                MessageBox.Show("Error: a1 filter coefficient needs to be in range  0 < a1 < 1.0.");
+                textBox7.Text = "";
+                return;
+            }
+            //Check if data has already been filtered if yes clear hiPassAudio aray
+            if (isFiltered) {
+                Array.Clear(hiPassAudio, 0, sampleCount);    
+            }else
+            {
+                hiPassAudio = new double[sampleCount];
+                hiPassAudio[0] = 0;
+            }
             //Apply low pass filter to data
             for (int i = 1; i < sampleCount; i++)
             {
-                hiPassAudio[i] = audioData[i] - 0.95 * audioData[i - 1];
+                hiPassAudio[i] = audioData[i] - a1 * audioData[i - 1];
             }
 
             // divided the Y-axis into integer intervals
@@ -326,8 +351,13 @@ namespace VoiceActivtyDetector
 
             //Plot filtered audio data
             chart1.Series["Raw Data"].Enabled = false;
-            chart1.Series.Add("Hi Pass Data");
-            chart1.Series["Hi Pass Data"].ChartType = SeriesChartType.Line;
+            if (!isFiltered)
+            {
+                chart1.Series.Add("Hi Pass Data");
+                chart1.Series.Add("Zero Crossings");
+                isFiltered = true;
+            }
+            chart1.Series["Hi Pass Data"].ChartType = SeriesChartType.Line;              
             chart1.Series["Hi Pass Data"].Points.DataBindY(hiPassAudio);
         }
 
@@ -342,6 +372,7 @@ namespace VoiceActivtyDetector
 
         private void ZeroCCounter()
         {
+            zeros.Clear();
             //Count all zero crossings and record time sample in zeros list
             for (int i =1; i< sampleCount; i++)
             {
@@ -497,8 +528,9 @@ namespace VoiceActivtyDetector
 
         private void PlotZeroCrossings()
         {
-            //Add a new fiedl in the chart plotting the zero crossings calculated but not yet visible
-            chart1.Series.Add("Zero Crossings");
+            chart1.Series["Zero Crossings"].Points.Clear();
+            if (!checkBox1.Checked) { return; }
+            
             chart1.Series["Zero Crossings"].ChartType = SeriesChartType.Point;
             chart1.Series["Zero Crossings"].MarkerColor = Color.Red;
             chart1.Series["Zero Crossings"].MarkerStyle = MarkerStyle.Circle;
